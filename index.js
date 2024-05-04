@@ -1,11 +1,11 @@
 import express from "express";
 import cors from "cors";
-import { MongoClient, ServerApiVersion } from "mongodb";
+import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const app=express();
+const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors());
@@ -27,12 +27,37 @@ async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
+
+        const serviceCollection = client.db('carDoctorDB').collection('services');
+        const bookingCollection = client.db('carDoctorDB').collection('bookings');
+
+        app.get('/services', async (req, res) => {
+            const cursor = serviceCollection.find();
+            const result = await cursor.toArray();
+
+            res.send(result)
+        })
+
+        app.get('/services/:id', async (req, res) => {
+            const s_id = req.params.id;
+            const query = { _id: new ObjectId(s_id) };
+            const options = { projection: {title: 1, price: 1, service_id:1} }
+            const result = await serviceCollection.findOne(query, options);
+
+            res.send(result);
+        })
+
+        app.post('bookings', async (req, res) => {
+            const booking = req.body;
+            
+        })
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
-        await client.close();
+        // await client.close();
     }
 }
 run().catch(console.dir);
@@ -43,6 +68,6 @@ app.get('/', (req, res) => {
     res.send('Doctor is Running!')
 })
 
-app.listen(port,() => {
+app.listen(port, () => {
     console.log(`Doctor Server is Running on ${port}`);
 })
