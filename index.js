@@ -1,17 +1,19 @@
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
+import cookieParser from "cookie-parser";
 import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 import dotenv from "dotenv";
 
 dotenv.config();
 
+const corsOptions = ['http://localhost:5173', 'http://localhost:5174']
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({ origin: corsOptions, credentials: true }));
 app.use(express.json());
-
+app.use(cookieParser());
 
 const uri = `mongodb+srv://${process.env.CAR_USER}:${process.env.CAR_PASS}@cluster0.qmbsuxs.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -37,9 +39,7 @@ const run = async () => {
             const user = req.body;
             console.log('from jwt', user);
             const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '1h' })
-
-            res.send(token)
-
+            res.cookie('token', token, { httpOnly: true, secure: false}).send({ success: true })
         })
 
         app.get('/services', async (req, res) => {
@@ -67,6 +67,7 @@ const run = async () => {
 
         app.get('/bookings', async (req, res) => {
             console.log(req.query);
+            console.log('tok tok', req.cookies.token);
             let query = {};
             if (req.query?.email) {
                 query = { email: req.query.email }
