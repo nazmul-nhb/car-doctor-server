@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import jwt from "jsonwebtoken";
 import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 import dotenv from "dotenv";
 
@@ -23,7 +24,7 @@ const client = new MongoClient(uri, {
     }
 });
 
-async function run() {
+const run = async () => {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
@@ -31,11 +32,21 @@ async function run() {
         const serviceCollection = client.db('carDoctorDB').collection('services');
         const bookingCollection = client.db('carDoctorDB').collection('bookings');
 
+        // auth related
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            console.log('from jwt', user);
+            const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '1h' })
+
+            res.send(token)
+
+        })
+
         app.get('/services', async (req, res) => {
             const cursor = serviceCollection.find();
             const result = await cursor.toArray();
 
-            res.send(result)
+            res.send(result);
         })
 
         app.get('/services/:id', async (req, res) => {
@@ -78,10 +89,8 @@ async function run() {
             console.log(updatedBooking);
             const filter = { _id: new ObjectId(update_id) };
             // const options = { upsert: true }
-            const updateDoc = {
-                $set: { ...updatedBooking }
-            }
-            const result = await bookingCollection.updateOne(filter, updateDoc);
+            const updatedDoc = { $set: { ...updatedBooking } };
+            const result = await bookingCollection.updateOne(filter, updatedDoc);
 
             res.send(result)
         })
