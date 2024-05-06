@@ -59,12 +59,23 @@ const run = async () => {
         const serviceCollection = client.db('carDoctorDB').collection('services');
         const bookingCollection = client.db('carDoctorDB').collection('bookings');
 
-        // auth related
+        // auth related api
         app.post('/jwt', logger, async (req, res) => {
             const user = req.body;
             console.log('from jwt', user);
             const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '1h' })
-            res.cookie('token', token, { httpOnly: true, secure: false }).send({ success: true })
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            })
+                .send({ success: true })
+        })
+
+        app.post('/logout', async (req, res) => {
+            const user = req.body;
+            console.log('logging out...', user);
+            res.clearCookie('token', { maxAge: 0 }).send({ success: true })
         })
 
         app.get('/services', logger, async (req, res) => {
