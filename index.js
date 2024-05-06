@@ -8,7 +8,12 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // middlewares
-const corsOptions = ['http://localhost:5173', 'http://localhost:5174']
+const corsOptions = [
+    // 'http://localhost:5173',
+    // 'http://localhost:5174',
+    'https://car-doctor-9dd8d.web.app',
+    'https://car-doctor-9dd8d.firebaseapp.com'
+]
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -63,7 +68,7 @@ const run = async () => {
         app.post('/jwt', logger, async (req, res) => {
             const user = req.body;
             console.log('from jwt', user);
-            const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '1h' })
+            const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '72h' })
             res.cookie('token', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
